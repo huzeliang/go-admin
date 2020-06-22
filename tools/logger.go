@@ -12,15 +12,21 @@ func InitLogger() {
 	log.SetFormatter(&log.TextFormatter{FieldMap: log.FieldMap{
 		log.FieldKeyTime:  "@timestamp",
 		log.FieldKeyLevel: "@level",
-		log.FieldKeyMsg:   "@message"}})
-
+		log.FieldKeyMsg:   "@message"}, TimestampFormat: "2006-01-02 15:04:05"})
 
 	switch Mode(config2.ApplicationConfig.Mode) {
 	case ModeDev, ModeTest:
 		log.SetOutput(os.Stdout)
 		log.SetLevel(log.TraceLevel)
 	case ModeProd:
-		file, err := os.OpenFile(config2.LogConfig.Dir+"/api-"+time.Now().Format("2006-01-02")+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE|os.O_SYNC, 0600)
+		// 创建日志目录
+		path := config2.LogConfig.Dir
+		_, err := os.Stat(path)
+		if err != nil && os.IsNotExist(err) {
+			_ = os.MkdirAll(path, os.ModePerm) //创建多级目录
+		}
+
+		file, err := os.OpenFile(path+"/api-"+time.Now().Format("2006-01-02")+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE|os.O_SYNC, 0600)
 		if err != nil {
 			log.Fatalln("log init failed")
 		}

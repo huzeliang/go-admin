@@ -1,0 +1,25 @@
+settings:
+  application:
+    host: 0.0.0.0
+    mode: prod
+    name: testApp
+    port: 8000
+    readtimeout: 1
+    writertimeout: 2
+    domain: localhost:8000
+    ishttps: false
+  ssl:
+    key: keystring
+    pem: temp/pem.pem
+  database:
+    dbtype: mysql
+    host: rm-2zec479l23c01hqxyeo.mysql.rds.aliyuncs.com
+    name: goadmindb
+    password: hzl2020!!
+    port: 3306
+    username: hzl
+  jwt:
+    secret: go-admin
+    timeout: 3600
+  log:
+    dir: temp/logs

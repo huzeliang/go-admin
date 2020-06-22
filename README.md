@@ -119,11 +119,21 @@ vi ./config/setting.yml
 ### 初始化数据库，以及服务启动
 ```
 # 首次配置需要初始化数据库资源信息
-./go-admin init -c config/settings.yml -m dev
+linux：./go-admin init -c config/settings.yml -m dev
+windows：go-admin.exe init -c config/settings.yml -m dev
+
+# 使用ide（goland）初始化db
+新建一个运行配置，找到Program arguments项配置如下： 
+init -c config/settings.yml -p 8000 -m dev
 
 
 # 启动项目，也可以用IDE进行调试
-./go-admin server -c config/settings.yml -p 8000 -m dev
+linux：./go-admin server -c config/settings.yml -p 8000 -m dev
+windows：go-admin.exe server -c config/settings.yml -p 8000 -m dev
+
+# 使用ide（goland）启动项目
+新建一个运行配置，找到Program arguments项配置如下： 
+server -c config/settings.yml -p 8000 -m dev
 
 ```
 
