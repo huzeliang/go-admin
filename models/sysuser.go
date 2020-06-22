@@ -2,10 +2,10 @@ package models
 
 import (
 	"errors"
-	orm "go-admin/database"
+	"go-admin/global/orm"
 	"go-admin/tools"
 	"golang.org/x/crypto/bcrypt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -199,10 +199,11 @@ func (e SysUser) Insert() (id int, err error) {
 
 //修改
 func (e *SysUser) Update(id int) (update SysUser, err error) {
-	//if err = e.Encrypt(); err != nil {
-	//	return
-	//}
-	e.Password = ""
+	if e.Password!="" {
+		if err = e.Encrypt(); err != nil {
+			return
+		}
+	}
 	if err = orm.Eloquent.Table(e.TableName()).First(&update, id).Error; err != nil {
 		return
 	}
