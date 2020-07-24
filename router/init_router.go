@@ -16,7 +16,7 @@ func InitRouter() *gin.Engine {
 		r.Use(handler.TlsHandler())
 	}
 	middleware.InitMiddleware(r)
-	// the jwt middleware
+	// 初始化jwt权限
 	authMiddleware, err := middleware.AuthInit()
 	tools.HasError(err, "JWT Init Error", 500)
 

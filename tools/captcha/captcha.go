@@ -20,9 +20,8 @@ type configJsonBody struct {
 	DriverDigit   *base64Captcha.DriverDigit
 }
 
-
-func DriverStringFunc()  (id, b64s string, err error) {
-	e :=configJsonBody{}
+func DriverStringFunc() (id, b64s string, err error) {
+	e := configJsonBody{}
 	e.Id = uuid.New().String()
 	e.DriverString = base64Captcha.NewDriverString(46, 140, 2, 2, 4, "234567890abcdefghjkmnpqrstuvwxyz", &color.RGBA{240, 240, 246, 246}, []string{"wqy-microhei.ttc"})
 	driver := e.DriverString.ConvertFonts()
@@ -30,7 +29,7 @@ func DriverStringFunc()  (id, b64s string, err error) {
 	return cap.Generate()
 }
 
-
+// 数字验证码
 func DriverDigitFunc() (id, b64s string, err error) {
 	e := configJsonBody{}
 	e.Id = uuid.New().String()

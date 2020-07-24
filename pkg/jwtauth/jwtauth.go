@@ -396,6 +396,7 @@ func (mw *GinJWTMiddleware) middlewareImpl(c *gin.Context) {
 	}
 
 	c.Set("JWT_PAYLOAD", claims)
+	// 解析获取上面claims中的载荷信息
 	identity := mw.IdentityHandler(c)
 
 	if identity != nil {
@@ -410,7 +411,7 @@ func (mw *GinJWTMiddleware) middlewareImpl(c *gin.Context) {
 	c.Next()
 }
 
-// GetClaimsFromJWT get claims from JWT token
+// 获取jwt token中携带过来的载荷信息
 func (mw *GinJWTMiddleware) GetClaimsFromJWT(c *gin.Context) (MapClaims, error) {
 	token, err := mw.ParseToken(c)
 
@@ -441,6 +442,7 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 		return
 	}
 
+	// 登录验证，日志等
 	data, err := mw.Authenticator(c)
 
 	if err != nil {
@@ -448,8 +450,9 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// Create the token
+	// 创建token
 	token := jwt.New(jwt.GetSigningMethod(mw.SigningAlgorithm))
+	// jwt第二段，封装信息
 	claims := token.Claims.(jwt.MapClaims)
 
 	if mw.PayloadFunc != nil {

@@ -63,6 +63,7 @@ func sysNoCheckRoleRouter(r *gin.RouterGroup) {
 
 func registerDBRouter(api *gin.RouterGroup) {
 	db := api.Group("/db")
+	// 函数里面的花括号中内容是作为一个单独的语句块，其中的变量是单独的作用域，同名变量会覆盖外层
 	{
 		db.GET("/tables/page", GetDBTableList)
 		db.GET("/columns/page", GetDBColumnList)
