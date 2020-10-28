@@ -1,24 +1,33 @@
 package migrate
 
 import (
+	"bytes"
 	"fmt"
-	"go-admin/database"
-	"go-admin/global"
-	"go-admin/models"
-	"go-admin/models/gorm"
-	"go-admin/pkg/logger"
-	"go-admin/tools/config"
+	"strconv"
+	"text/template"
+	"time"
 
 	"github.com/spf13/cobra"
+
+	"go-admin/cmd/migrate/migration"
+	_ "go-admin/cmd/migrate/migration/version"
+	_ "go-admin/cmd/migrate/migration/version-local"
+	"go-admin/common/database"
+	"go-admin/common/global"
+	"go-admin/common/models"
+	"go-admin/pkg/logger"
+	tools2 "go-admin/tools"
+	"go-admin/tools/config"
 )
 
 var (
 	configYml string
-	mode      string
+	generate  bool
+	goAdmin   bool
 	StartCmd  = &cobra.Command{
-		Use:   "init",
-		Short: "Initialize the database",
-		Example: "go-admin init -c config/settings.yml",
+		Use:     "migrate",
+		Short:   "Initialize the database",
+		Example: "go-admin migrate -c config/settings.yml",
 		Run: func(cmd *cobra.Command, args []string) {
 			run()
 		},
@@ -27,32 +36,64 @@ var (
 
 func init() {
 	StartCmd.PersistentFlags().StringVarP(&configYml, "config", "c", "config/settings.yml", "Start server with provided configuration file")
-	StartCmd.PersistentFlags().StringVarP(&mode, "mode", "m", "dev", "server mode ; eg:dev,test,prod")
+	StartCmd.PersistentFlags().BoolVarP(&generate, "generate", "g", false, "generate migration file")
+	StartCmd.PersistentFlags().BoolVarP(&goAdmin, "goAdmin", "a", false, "generate go-admin migration file")
 }
 
 func run() {
 	usage := `start init`
 	fmt.Println(usage)
-	//1. 读取配置
-	config.Setup(configYml)
-	//2. 设置日志
-	logger.Setup()
-	//3. 初始化数据库链接
-	database.Setup(config.DatabaseConfig.Driver)
-	//4. 数据库迁移
-	_ = migrateModel()
-	fmt.Println("数据库结构初始化成功！")
-	//5. 数据初始化完成
-	if err := models.InitDb(); err != nil {
-		global.Logger.Fatal("数据库基础数据初始化失败！")
+
+	if !generate {
+		//1. 读取配置
+		config.Setup(configYml)
+		//2. 设置日志
+		logger.Setup()
+		_ = initDB()
+	} else {
+		_ = genFile()
 	}
-	usage = `数据库基础数据初始化成功`
-	fmt.Println(usage)
 }
 
 func migrateModel() error {
 	if config.DatabaseConfig.Driver == "mysql" {
-		global.Eloquent = global.Eloquent.Set("gorm:table_options", "ENGINE=InnoDB CHARSET=utf8mb4")
+		global.Eloquent.Set("gorm:table_options", "ENGINE=InnoDB CHARSET=utf8mb4")
 	}
-	return gorm.AutoMigrate(global.Eloquent)
+	err := global.Eloquent.Debug().AutoMigrate(&models.Migration{})
+	if err != nil {
+		return err
+	}
+	migration.Migrate.SetDb(global.Eloquent.Debug())
+	migration.Migrate.Migrate()
+	return err
+}
+func initDB() error {
+	//3. 初始化数据库链接
+	database.Setup(config.DatabaseConfig.Driver)
+	//4. 数据库迁移
+	fmt.Println("数据库迁移开始")
+	_ = migrateModel()
+	fmt.Println(`数据库基础数据初始化成功`)
+	return nil
+}
+
+func genFile() error {
+	t1, err := template.ParseFiles("template/migrate.template")
+	if err != nil {
+		return err
+	}
+	m := map[string]string{}
+	m["GenerateTime"] = strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
+	m["Package"] = "version_local"
+	if goAdmin {
+		m["Package"] = "version"
+	}
+	var b1 bytes.Buffer
+	err = t1.Execute(&b1, m)
+	if goAdmin {
+		tools2.FileCreate(b1, "./cmd/migrate/migration/version/"+m["GenerateTime"]+"_migrate.go")
+	} else {
+		tools2.FileCreate(b1, "./cmd/migrate/migration/version-local/"+m["GenerateTime"]+"_migrate.go")
+	}
+	return nil
 }
